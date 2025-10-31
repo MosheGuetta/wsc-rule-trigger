@@ -1,0 +1,67 @@
+{
+  "name": "wsc-rule-trigger",
+  "version": "1.0.0",
+  "description": "Desktop tool to batch-trigger WSC Post Game Rules from CSV.",
+  "main": "electron/main.js",
+  "author": "WSC Sports – Moshe",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && cross-env VITE_DEV=1 electron .\"",
+    "build": "vite build && electron-builder",
+    "electron": "cross-env VITE_DEV=1 electron ."
+  },
+  "dependencies": {
+    "@vitejs/plugin-react-swc": "^4.2.0",
+    "axios": "^1.7.7",
+    "csv-parse": "^5.6.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^31.3.1",
+    "electron-builder": "^24.13.3",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "vite": "^5.4.10",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.wsc.rulledtrigger",
+    "productName": "WSC Rule Trigger",
+    "files": [
+      "dist/**",
+      "electron/**",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "public"
+    },
+    "extraResources": [
+      { "from": "public", "to": "resources" }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "public/icon.ico"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "icon": "public/icon.icns",
+      "category": "public.app-category.utilities"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "public"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
