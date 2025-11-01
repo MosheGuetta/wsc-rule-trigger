@@ -1,43 +1,66 @@
-name: Build WSC Rule Trigger
+name: Build & Release WSC Rule Trigger
 
 on:
-  workflow_dispatch:  # run manually from the GitHub Actions tab
+  workflow_dispatch:  # manually trigger from GitHub Actions tab
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build:
+    name: Build for Windows & macOS
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci
 
-      - name: Build Electron app (Windows)
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
         run: npm run build
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}   # ✅ Pass your GitHub token here
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # ✅ secure token for electron-builder
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: windows-build
+          name: ${{ runner.os }}-build
           path: dist/
 
-  build-macos:
-    runs-on: macos-latest
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm ci
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Build Electron app (macOS)
-        run: npm run build
+      - name: Download Windows build
+        uses: actions/download-artifact@v4
+        with:
+          name: Windows-build
+          path: dist/windows
+
+      - name: Download macOS build
+        uses: actions/download-artifact@v4
+        with:
+          name: macOS-build
+          path: dist/macos
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: "WSC Rule Trigger v${{ github.run_number }}"
+          files: |
+            dist/windows/**
+            dist/macos/**
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}   # ✅ Pass token here as well
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos-build
-          path: dist/
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}  # ✅ same secure token
