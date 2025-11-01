@@ -1,4 +1,4 @@
-name: Build & Release WSC Rule Trigger
+name: Build & Auto-Release WSC Rule Trigger
 
 on:
   workflow_dispatch:  # manually trigger from GitHub Actions tab
@@ -23,10 +23,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Bump version automatically
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          npm version patch -m "🔖 Bump version to %s [skip ci]"
+          git push origin HEAD:main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
       - name: Build app
         run: npm run build
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # ✅ secure token for electron-builder
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -41,6 +50,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Get latest version tag
+        id: version
+        run: echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
 
       - name: Download Windows build
         uses: actions/download-artifact@v4
@@ -57,10 +70,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
-          name: "WSC Rule Trigger v${{ github.run_number }}"
+          tag_name: v${{ steps.version.outputs.version }}
+          name: "WSC Rule Trigger v${{ steps.version.outputs.version }}"
           files: |
             dist/windows/**
             dist/macos/**
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}  # ✅ same secure token
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
