@@ -12,7 +12,12 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: npm run build
+
+      - name: Build Electron app (Windows)
+        run: npm run build
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}   # ✅ Pass your GitHub token here
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-build
@@ -26,7 +31,12 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: npm run build
+
+      - name: Build Electron app (macOS)
+        run: npm run build
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}   # ✅ Pass token here as well
+
       - uses: actions/upload-artifact@v4
         with:
           name: macos-build
